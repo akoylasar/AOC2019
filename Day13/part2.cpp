@@ -199,17 +199,13 @@ std::unique_ptr<Input> getInput()
 }
 
 inline LONG arOp(LONG x, LONG y, LONG c) { return c == 1 ? x + y : x * y; }
-
 inline bool jmpOp(LONG x, LONG c)
 {
-  if (c == 5) return x != 0;
-  else return x == 0;
+  return (c == 5) ? (x != 0) : (x == 0);
 }
-
 inline int compOp(LONG x, LONG y, LONG c)
 {
-  if (c == 7) return static_cast<int>(x < y);
-  else return static_cast<int>(x == y);
+  return static_cast<int>(((c == 7) ? (x < y) : (x == y)));
 }
 
 void compute(Input& input, Cabinet& cabinet)

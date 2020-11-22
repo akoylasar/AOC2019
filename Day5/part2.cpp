@@ -42,13 +42,11 @@ void solve(std::vector<int>& input)
   const auto arOp = [](int x, int y, int c) { return c == 1 ? x + y : x * y; };
   const auto jmpOp = [](int x, int c) -> bool
   {
-    if (c == 5) return x != 0;
-    else return x == 0;
+    return (c == 5) ? (x != 0) : (x == 0);
   };
   const auto compOp = [](int x, int y, int c) -> int
   {
-    if (c == 7) return static_cast<int>(x < y);
-    else return static_cast<int>(x == y);
+    return static_cast<int>(((c == 7) ? (x < y) : (x == y)));
   };
   for (unsigned i = 0;;)
   {
@@ -68,6 +66,7 @@ void solve(std::vector<int>& input)
       const int v1 = input[i + 2];
       const int x = ((inst / 100) % 10) ? v0 : input[v0];
       const int y = (inst / 1000) ? v1 : input[v1];
+      // from problem description 'Parameters that an instruction writes to will never be in immediate mode.'
       if (op == 1 || op == 2) // arith op
       {
         input[input[i + 3]] = arOp(x, y, op);
@@ -77,7 +76,7 @@ void solve(std::vector<int>& input)
       {
         i = jmpOp(x, op) ? y : i + 3;
       }
-      else // comp op
+      else // comp op (7 for 'less than' or 8 for 'equal')
       {
         input[input[i + 3]] = compOp(x, y, op);
         i += 4;

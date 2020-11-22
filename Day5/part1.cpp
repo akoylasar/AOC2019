@@ -48,7 +48,7 @@ void solve(std::vector<int>& input)
     {
       const int s = input[i + 1];
       if (op == 4) std::cout << (inst / 100 ? s : input[s]) << "\n";
-      else input[s] = 1;
+      else input[s] = 1; //  providing 1 to the only input instruction
       i += 2;
     }
     else

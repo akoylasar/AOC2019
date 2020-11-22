@@ -50,17 +50,13 @@ inline int fact(int n)
 }
 
 inline int arOp(int x, int y, int c) { return c == 1 ? x + y : x * y; }
-
 inline bool jmpOp(int x, int c)
 {
-  if (c == 5) return x != 0;
-  else return x == 0;
+  return (c == 5) ? (x != 0) : (x == 0);
 }
-
 inline int compOp(int x, int y, int c)
 {
-  if (c == 7) return static_cast<int>(x < y);
-  else return static_cast<int>(x == y);
+  return static_cast<int>(((c == 7) ? (x < y) : (x == y)));
 }
 
 using Stack = std::vector<int>;
