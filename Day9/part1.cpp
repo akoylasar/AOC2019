@@ -7,23 +7,7 @@
 #include <algorithm>
 #include <map>
 
-#define MEASURE(expression, numTrials, numRuns)\
-{\
-using DDuration = std::chrono::duration<double, std::milli>;\
-double duration = 0.0;\
-for (int _trial = 0; _trial < numTrials; ++_trial)\
-{\
-const auto _t0 = std::chrono::high_resolution_clock::now();\
-for (int _run = 0; _run < numRuns; ++_run)\
-{\
-expression\
-}\
-const auto _t1 = std::chrono::high_resolution_clock::now();\
-duration += std::chrono::duration_cast<DDuration>(_t1 - _t0).count();\
-}\
-const double avgDuration = duration / (numTrials * numRuns);\
-std::cout << "Ran " << numTrials << " trial(s) each of which consisting of " << numRuns << " run(s). Average time of the algorithm is " << avgDuration << "(ms).\n";\
-}
+#include "common.hpp"
 
 #define INPUT 1
 
@@ -100,6 +84,7 @@ void compute(Input& input, Output& output)
       const LONG v1 = input[i + 2];
       const LONG xMode = ((inst / 100) % 10);
       const LONG yMode = ((inst / 1000) % 10);
+      // 0 is position mode, 2 is relative mode, 1 is immediate mode.
       const LONG x = (xMode % 2) ? v0 : input[v0 + (!xMode ? 0 : relativeBase)];
       const LONG y = (yMode % 2) ? v1 : input[v1 + (!yMode ? 0 : relativeBase)];
       const int outputMode = inst / 10000;
@@ -132,5 +117,5 @@ void solve(Input& input)
 int main()
 {
   auto input = getInput();
-  MEASURE(solve(*input);, 1, 1);
+  MEASURE(solve(*input);, 1);
 }

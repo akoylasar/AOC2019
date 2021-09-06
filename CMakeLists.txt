@@ -19,8 +19,10 @@ set (Days
 foreach (Day ${Days})
 	add_executable (${Day}.part1
 		${Day}/part1.cpp
+		common.hpp
 	)
 	add_executable (${Day}.part2
 		${Day}/part2.cpp
+		common.hpp
 	)
 endforeach(Day)

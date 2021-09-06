@@ -2,25 +2,8 @@
 #include <vector>
 #include <numeric>
 #include <iostream>
-#include <chrono>
 
-#define MEASURE(expression, numTrials, numRuns)\
-{\
-using DDuration = std::chrono::duration<double, std::milli>;\
-double duration = 0.0;\
-for (int _trial = 0; _trial < numTrials; ++_trial)\
-{\
-const auto _t0 = std::chrono::high_resolution_clock::now();\
-for (int _run = 0; _run < numRuns; ++_run)\
-{\
-expression\
-}\
-const auto _t1 = std::chrono::high_resolution_clock::now();\
-duration += std::chrono::duration_cast<DDuration>(_t1 - _t0).count();\
-}\
-const double avgDuration = duration / (numTrials * numRuns);\
-std::cout << "Ran " << numTrials << " trial(s) each of which consisting of " << numRuns << " run(s). Average time of the algorithm is " << avgDuration << "(ms).\n";\
-}
+#include "../common.hpp"
 
 std::vector<int> getInput()
 {
@@ -40,24 +23,27 @@ std::vector<int> getInput()
 
 int main()
 {
-  const int output = 19690720;
+  const int output = 19690720; // from problem description.
   std::vector<int> input = getInput();
   const auto op = [](int x, int y, int c) { return c == 1 ? x + y : x * y; };
   
-  MEASURE(
   bool terminate = false;
   int noun = 0;
   int verb = 50;
+  MEASURE(
   for (noun = 0; noun < 100; ++noun)
   {
     int l = 0; int h = 100;
     verb = 50;
+    // Here we do a binary search to speed things up with the assumption
+    // that the only operations supported are + and * on non-negative integers.
     while (l < h)
     {
+      // Resetting the program per run.
       std::vector<int> s = input;
-      s[1] = noun; s[2] = verb;
+      s[1] = noun; s[2] = verb; // Input that differs per run.
       for (unsigned i = 0; s[i] != 99; i = i + 4)
-        s[input[i + 3]] = op(s[s[i + 1]], s[s[i + 2]], s[i]);
+        s[s[i + 3]] = op(s[s[i + 1]], s[s[i + 2]], s[i]);
       int x = s[0];
       if (x == output)
       {
@@ -68,7 +54,6 @@ int main()
       verb = (h - l + 1) / 2 + l;
     }
     if (terminate) break;
-  }
+  };, 1);
   std::cout << "noun: " << noun << " verb: " << verb << " result: " << 100 * noun + verb << "\n";
-  ,1, 1);
 }

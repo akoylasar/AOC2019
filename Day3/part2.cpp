@@ -5,23 +5,7 @@
 #include <sstream>
 #include <cmath>
 
-#define MEASURE(expression, numTrials, numRuns)\
-{\
-using DDuration = std::chrono::duration<double, std::milli>;\
-double duration = 0.0;\
-for (int _trial = 0; _trial < numTrials; ++_trial)\
-{\
-const auto _t0 = std::chrono::high_resolution_clock::now();\
-for (int _run = 0; _run < numRuns; ++_run)\
-{\
-expression\
-}\
-const auto _t1 = std::chrono::high_resolution_clock::now();\
-duration += std::chrono::duration_cast<DDuration>(_t1 - _t0).count();\
-}\
-const double avgDuration = duration / (numTrials * numRuns);\
-std::cout << "Ran " << numTrials << " trial(s) each of which consisting of " << numRuns << " run(s). Average time of the algorithm is " << avgDuration << "(ms).\n";\
-}
+#include "../common.hpp"
 
 struct Point
 {
@@ -111,6 +95,6 @@ int main()
   unsigned int d;
   MEASURE(
   d = solve(wires);
-  ,1, 1);
+  , 1);
   std::cout << "result : " << d << std::endl;
 }
