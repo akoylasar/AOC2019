@@ -14,7 +14,7 @@ set(Days
 	Day9
 	Day11
 	Day13
-	Day14
+	Day15
 )
 
 foreach (Day ${Days})
@@ -38,7 +38,7 @@ set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "" FORCE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/SFML)
 
 set(ExtendedDays
-	Day14
+	Day15
 )
 set(Parts
 	part1
