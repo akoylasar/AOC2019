@@ -37,12 +37,12 @@ private:
 
 struct Vec2 { int x = 0; int y = 0; };
 bool operator==(const Vec2& l, const Vec2& r) { return l.x == r.x && l.y == r.y; }
-
+// https://en.wikipedia.org/wiki/Pairing_function
+// accepting collisions mirrored pairs on each quadrant.
 std::size_t FouadHash(const Vec2 v)
 {
   int n = v.x + v.y;
-  int m = n % 2 ? ((n / 2) * (n + 1)) : (((n - 1) / 2) * n); ++m;
-  return m - v.x;
+  return (n * (n + 1) / 2) + v.y;
 }
 namespace std
 {
