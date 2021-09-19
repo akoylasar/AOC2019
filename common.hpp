@@ -2,6 +2,22 @@
 
 #include <chrono>
 #include <iostream>
+#include <cassert>
+
+#define DEBUG_ASSERT(expr) assert(expr)
+#ifndef NDEBUG
+  #define DEBUG_ASSERT_MSG(expr, msg)\
+  do\
+  {\
+    if (!(expr))\
+    {\
+      std::cerr << "Assertion failed with message: "<< msg << std::endl;\
+      std::terminate();\
+    }\
+  } while (false)
+#else
+  #define DEBUG_ASSERT_MSG(expr, msg) do {} while (false)
+#endif
 
 #define MEASURE(expression, numRuns)\
 {\
