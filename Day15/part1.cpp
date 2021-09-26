@@ -13,6 +13,8 @@
 
 #include "../common.hpp"
 
+#define VISUALISE_WALLS 0
+
 const int kNumDefaultTiles = 20;
 const int kDefaultScreenRes = 1700;
 
@@ -107,6 +109,9 @@ public:
         {
           if (it->second == 1) col = sf::Color::White; // on free tile.
           else if (it->second == 2) col = sf::Color::Red; // on oxygen system.
+#if(VISUALISE_WALLS)
+          else if (it->second == -1) col = sf::Color{150, 75, 0}; // wall brown.
+#endif
         }
         for (int k = 0; k < 4; ++k) quad[k].color = col;
 
@@ -219,17 +224,17 @@ private:
     // output == 0 // hit a wall.
     // output == 1 // moved one step in the requested direction.
     // output == 2 // moved one step and has found oxygen system.
-    if (output)
-    {
-      // 1 == north, 2 == south, 3 == west, 4 == east
-      if (direction == 1) mPos.y += 1;
-      else if (direction == 2) mPos.y -= 1;
-      else if (direction == 3) mPos.x -= 1;
-      else mPos.x += 1;
-      mTileMap[mPos] = output;
-      return true;
-    }
-    return false;
+    sf::Vector2i wallPos{mPos};
+    auto& curToUpdata = output ? mPos : wallPos;
+    
+    // 1 == north, 2 == south, 3 == west, 4 == east
+    if (direction == 1) curToUpdata.y += 1;
+    else if (direction == 2) curToUpdata.y -= 1;
+    else if (direction == 3) curToUpdata.x -= 1;
+    else curToUpdata.x += 1;
+    mTileMap[curToUpdata] = output ? output : -1;
+    
+    return output != 0;
   }
   
 private:
@@ -239,7 +244,7 @@ private:
   LONG mRelativeBase = 0;
 
   // robot and tile related
-  sf::Vector2i mPos = {0, 0};
+  sf::Vector2i mPos = {0, 0}; // in cartesian coordinates.
   TileMap mTileMap;
 };
 
