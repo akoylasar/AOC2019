@@ -4,6 +4,8 @@
 #include <fstream>
 #include <algorithm>
 #include <unordered_map>
+#include <stack>
+#include <array>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
@@ -14,6 +16,7 @@
 #include "../common.hpp"
 
 #define VISUALISE_WALLS 0
+#define AUTOMATED 1
 
 const int kNumDefaultTiles = 20;
 const int kDefaultScreenRes = 1700;
@@ -162,7 +165,10 @@ public:
     return mTileMap;
   }
   
-  bool move(int dir)
+  // 0 hit a wall.
+  // 1 moved one step in the requested direction.
+  // 2 moved one step and has found oxygen system.
+  int move(int dir)
   {
     while (true)
     {
@@ -214,27 +220,22 @@ public:
         }
       }
     }
-    DEBUG_ASSERT_MSG(false, "Unreachable");
-    return false;
   }
   
 private:
-  bool update(int direction, int output)
+  int update(int direction, int output)
   {
-    // output == 0 // hit a wall.
-    // output == 1 // moved one step in the requested direction.
-    // output == 2 // moved one step and has found oxygen system.
     sf::Vector2i wallPos{mPos};
-    auto& curToUpdata = output ? mPos : wallPos;
+    auto& posToUpdata = output ? mPos : wallPos;
     
     // 1 == north, 2 == south, 3 == west, 4 == east
-    if (direction == 1) curToUpdata.y += 1;
-    else if (direction == 2) curToUpdata.y -= 1;
-    else if (direction == 3) curToUpdata.x -= 1;
-    else curToUpdata.x += 1;
-    mTileMap[curToUpdata] = output ? output : -1;
+    if (direction == 1) posToUpdata.y += 1;
+    else if (direction == 2) posToUpdata.y -= 1;
+    else if (direction == 3) posToUpdata.x -= 1;
+    else posToUpdata.x += 1;
+    mTileMap[posToUpdata] = output ? output : -1;
     
-    return output != 0;
+    return output;
   }
   
 private:
@@ -248,6 +249,82 @@ private:
   TileMap mTileMap;
 };
 
+class RobotController
+{
+public:
+  RobotController(Robot& robot) : mRobot(robot) {}
+  const int getMoves() const {return mTileRec.size();}
+  const bool isFinished() const {return mFinished;};
+  bool update()
+  {
+    const sf::Vector2i curPos = mRobot.getPos();
+    const TileMap& tileMap = mRobot.getTileMap();
+    // check if we found the final spot if so we halt.
+    auto it = tileMap.find(curPos);
+    if (it != tileMap.end() && it->second == 2)
+    {
+      mFinished = true;
+      return false;
+    }
+    const std::array<sf::Vector2i, 4> allNeighbours
+    {
+     sf::Vector2i{curPos.x - 1, curPos.y},
+     sf::Vector2i{curPos.x + 1, curPos.y},
+     sf::Vector2i{curPos.x, curPos.y - 1},
+     sf::Vector2i{curPos.x, curPos.y + 1}
+    };
+    
+    std::vector<sf::Vector2i> toExplore;
+    for (const auto& neighbour : allNeighbours)
+    {
+      auto it = tileMap.find(neighbour);
+      // we don't want to visit a tile that we've already visited.
+      if (it == tileMap.end())
+      {
+        if (!mTileRec.empty() && mTileRec.top() == neighbour) continue; // skip tile from which we came.
+        toExplore.push_back(neighbour);
+      }
+    }
+
+    for (const auto& neighbour : toExplore)
+    {
+      const int dir = getMoveDirection(curPos, neighbour);
+      if (mRobot.move(dir))
+      {
+        mTileRec.push(curPos);
+        return true;
+      }
+    }
+    // none of the neighbours were available so backtrack.
+    if (!mTileRec.empty())
+    {
+      const sf::Vector2i prevTile = mTileRec.top();
+      mTileRec.pop();
+      const int dir = getMoveDirection(curPos, prevTile);
+      DEBUG_ASSERT_MSG(mRobot.move(dir), "Something's screwed up, previous tile should always be available.");
+      return true;
+    }
+    DEBUG_ASSERT_MSG(false, "Back to origin and everything already checked. Something is wrong.");
+  }
+private:
+  int getMoveDirection(const sf::Vector2i& start, const sf::Vector2i& dest)
+  {
+    // up(1), down(2), left(3), right(4)
+    int result = 0;
+    if (dest.x < start.x) result = 3;
+    else if (dest.x > start.x) result = 4;
+    else if (dest.y < start.y) result = 2;
+    else if (dest.y > start.y) result = 1;
+    DEBUG_ASSERT_MSG(result, "directiont can be only one of 1, 2, 3, 4.");
+    return result;
+  }
+  
+private:
+  Robot& mRobot;
+  std::stack<sf::Vector2i> mTileRec;
+  bool mFinished = false;
+};
+
 int main()
 {
   sf::Uint32 windowStyle = sf::Style::Titlebar | sf::Style::Close;
@@ -257,11 +334,40 @@ int main()
   Robot robot;
   TileMapRenderer tileMap;
   tileMap.prepareForDraw(robot.getTileMap(), robot.getPos());
+#if (AUTOMATED)
+  RobotController controller{robot};
+#else
   window.setKeyRepeatEnabled(true);
+#endif
+  sf::Clock clock;
+  constexpr int kDelay = 25;
   while (window.isOpen())
   {
     sf::Event event;
-    bool moveSucceeded = false;
+    int moveSucceeded = false;
+#if (AUTOMATED)
+    if (controller.isFinished())
+    {
+      if (clock.getElapsedTime().asMilliseconds() > 2000)
+      {
+        std::cout << "Robot at position after " << controller.getMoves() << " moves\n";
+        return 0;
+      }
+    }
+		else
+    {
+      if (clock.getElapsedTime().asMilliseconds() > kDelay)
+      {
+        moveSucceeded = controller.update();
+        clock.restart();
+      }
+    }
+    if (window.pollEvent(event))
+    {
+      if (event.type == sf::Event::Closed)
+        window.close();
+    }
+#else
     if (window.pollEvent(event))
     {
       if (event.type == sf::Event::Closed)
@@ -282,6 +388,7 @@ int main()
         }
       }
     }
+#endif
     if (moveSucceeded)
       tileMap.prepareForDraw(robot.getTileMap(), robot.getPos());
     window.clear();
